@@ -30,3 +30,5 @@ This extension contributes the following settings:
 * `ansibleVault.executable`: Full path of ansible-vault executable (e.g. `/usr/local/bin/ansible-vault`)
 * `ansibleVault.keyfile`: Ansible-vault password file path (e.g. `~/.vault-pass.txt`)
 * `ansibleVault.keypass`: Ansible-vault password text (e.g. `GT6rAP7rxYzeFC1KtHVW`)
+* `ansibleVault.vaultIds`: List of ansible-vault IDs (e.g. `[{"label:"myenv", "path": "path/to/myenv.secret"}]`)
+* `ansibleVault.vaultIdMatch`: Only uses key matching labels. If set to false, all VaultIds are tried (default)
