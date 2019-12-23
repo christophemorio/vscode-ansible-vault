@@ -2,11 +2,11 @@
   "name": "ansible-vault",
   "displayName": "ansible-vault",
   "description": "Encrypt/decrypt ansible-vault file",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "publisher": "dhoeric",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dhoeric/vscode-ansible-vault.git"
+    "url": "https://github.com/vvucetic/vscode-ansible-vault/tree/feature/add-inline-encryption"
   },
   "engines": {
     "vscode": "^1.15.0"
@@ -45,6 +45,21 @@
           "type": "string",
           "default": "",
           "description": "ansible-vault password file path"
+        },
+        "ansibleVault.vaultIds": {
+          "type": "array",
+          "default": [
+            {
+              "label": "default",
+              "path": "$HOME/.ansible/password"
+            }
+          ],
+          "markdownDescription": "List of ansible-vault IDs, [Ansible doc.](https://docs.ansible.com/ansible/latest/user_guide/vault.html#vault-ids-and-multiple-vault-passwords)"
+        },
+        "ansibleVault.vaultIdMatch": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Only uses key matching labels. If set to false, all VaultIds are tried, [Ansible doc.](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#default-vault-id-match)"
         }
       }
     },

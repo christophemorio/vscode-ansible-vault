@@ -79,7 +79,13 @@ export function activate(context: vscode.ExtensionContext) {
     let doc = preflightResult.editor.document;
     // Go encrypt / decrypt
     if (! await checkIfFileIsEncrypted(doc.fileName)) {
-      encryptFile(doc.fileName, preflightResult.rootPath, preflightResult.takeKeyFromAnsibleConfig, preflightResult.vaultKeyPath, preflightResult.config);
+      let vaultId: string;
+      await selectVaultId().then((val) => {vaultId = val;})
+      if (vaultId === null) {
+        // Palette command canceled
+        return
+      }
+      encryptFile(doc.fileName, preflightResult.rootPath, preflightResult.takeKeyFromAnsibleConfig, preflightResult.vaultKeyPath, preflightResult.config, vaultId);
     }
     else {
       decryptFile(doc.fileName, preflightResult.rootPath, preflightResult.takeKeyFromAnsibleConfig, preflightResult.vaultKeyPath, preflightResult.config);
@@ -117,8 +123,14 @@ export function activate(context: vscode.ExtensionContext) {
       we.replace(preflightResult.editor.document.uri, new vscode.Range(selection.start, selection.end), decryptedText);
     }
     else {
+      let vaultId: string;
+      await selectVaultId().then((val) => {vaultId = val;})
+      if (vaultId === null) {
+        // Palette command canceled
+        return
+      }
       // encrypt
-      let encryptedText = encryptString(selectedText, preflightResult.takeKeyFromAnsibleConfig, preflightResult.vaultKeyPath, preflightResult.config)
+      let encryptedText = encryptString(selectedText, preflightResult.takeKeyFromAnsibleConfig, preflightResult.vaultKeyPath, preflightResult.config, vaultId)
       we.replace(preflightResult.editor.document.uri, new vscode.Range(selection.start, selection.end), encryptedText);
     }
 
@@ -159,14 +171,42 @@ let checkIfStringIsEncrypted = (str: string) => {
   return false;
 }
 
-let encryptFile = (f, rootPath, keyInCfg, pass, config) => {
+let selectVaultId = async () => {
+  let vaultId: string;
+  let config = vscode.workspace.getConfiguration('ansibleVault');
+  let labelList = config.vaultIds.map(function(e: any){return e.label});
+  if (labelList.length == 0) {
+    // No VaultIds definied in settings
+    return undefined
+  }
+  labelList.unshift("default");
+  await vscode.window.showQuickPick(labelList).then((val) => {
+    vaultId = val;
+  })
+  return vaultId;
+}
+
+let argumentsVaultIds = (keyInCfg, pass, vaultId: string = "") => {
+  let args = ""
+  let config = vscode.workspace.getConfiguration('ansibleVault');
+  // Specify vault-password-file when vault_password_file not in ansible.cfg
+  if (!keyInCfg) {
+    args += ` --vault-password-file="${pass}"`;
+  }
+  for (let element of config.vaultIds) {
+    args += ` --vault-id="${element.label}@${element.path}"`;
+  }
+  if (vaultId) {
+    args += ` --encrypt-vault-id="${vaultId}"`
+  }
+  return args;
+}
+
+let encryptFile = (f, rootPath, keyInCfg, pass, config, vaultId: string = "default") => {
   console.log("Encrypt: " + f);
 
   let cmd = `${config.executable} encrypt "${f}"`;
-  // Specify vault-password-file when vault_password_file not in ansible.cfg
-  if (!keyInCfg) {
-    cmd += ` --vault-password-file="${pass}"`;
-  }
+  cmd += argumentsVaultIds(keyInCfg, pass, vaultId);
 
   if ( rootPath != undefined ) {
     exec(cmd, { cwd: rootPath });
@@ -177,25 +217,21 @@ let encryptFile = (f, rootPath, keyInCfg, pass, config) => {
   vscode.window.showInformationMessage(`${f} encrypted`);
 }
 
-let encryptString = (str: string, keyInCfg: boolean, pass: string, config: any) => {
+let encryptString = (str: string, keyInCfg: boolean, pass: string, config: any, vaultId: string = "default") => {
   // use printf instead of echo because echo is not consistent across platforms when it comes to
   // avoiding trailing empty line
   let cmd = `printf "%s" '${str}' | ${config.executable} - encrypt_string`;
-  // Specify vault-password-file when vault_password_file not in ansible.cfg
-  if (!keyInCfg) {
-    cmd += ` --vault-password-file="${pass}"`;
-  }
-  return exec(cmd).trim()
+  cmd += argumentsVaultIds(keyInCfg, pass, vaultId);
+
+  let env = config.vaultIdMatch ? {"ANSIBLE_VAULT_ID_MATCH": "1"} : {};
+  return exec(cmd, {"env": env}).trim();
 }
 
 let decryptFile = (f, rootPath, keyInCfg, pass, config) => {
   console.log("Decrypt: " + f);
 
   let cmd = `${config.executable} decrypt "${f}"`;
-  // Specify vault-password-file when vault_password_file not in ansible.cfg
-  if (!keyInCfg) {
-    cmd += ` --vault-password-file="${pass}"`;
-  }
+  cmd += argumentsVaultIds(keyInCfg, pass);
 
   if ( rootPath != undefined ) {
     exec(cmd, { cwd: rootPath });
@@ -208,11 +244,10 @@ let decryptFile = (f, rootPath, keyInCfg, pass, config) => {
 
 let decryptString = (str: string, keyInCfg: boolean, pass: string, config: any) => {
   let cmd = `echo '${str}' | ${config.executable} decrypt -`;
-  // Specify vault-password-file when vault_password_file not in ansible.cfg
-  if (!keyInCfg) {
-    cmd += ` --vault-password-file="${pass}"`;
-  }
-  return exec(cmd);
+  cmd += argumentsVaultIds(keyInCfg, pass);
+
+  let env = config.vaultIdMatch ? {"ANSIBLE_VAULT_ID_MATCH": "1"} : {};
+  return exec(cmd, {"env": env});
 }
 
 let exec = (cmd, opt={}) => {

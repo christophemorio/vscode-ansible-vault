@@ -5,6 +5,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.1.5]
+- Support for VaultIds selector
+
+## [0.1.4]
+- Add inline encryption [#21](https://github.com/dhoeric/vscode-ansible-vault/pull/21)
+
 ## [0.1.3]
 - Fix file-path issue, thanks @marcelhekking [#19](https://github.com/dhoeric/vscode-ansible-vault/pull/19)
 
