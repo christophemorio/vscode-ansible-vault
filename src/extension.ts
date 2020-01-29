@@ -79,12 +79,8 @@ export function activate(context: vscode.ExtensionContext) {
     let doc = preflightResult.editor.document;
     // Go encrypt / decrypt
     if (! await checkIfFileIsEncrypted(doc.fileName)) {
-      let vaultId: string;
-      await selectVaultId().then((val) => {vaultId = val;})
-      if (vaultId === null) {
-        // Palette command canceled
-        return
-      }
+      let vaultId = await selectVaultId();
+      if (vaultId === null) return  // Palette command canceled
       encryptFile(doc.fileName, preflightResult.rootPath, preflightResult.takeKeyFromAnsibleConfig, preflightResult.vaultKeyPath, preflightResult.config, vaultId);
     }
     else {
@@ -123,12 +119,8 @@ export function activate(context: vscode.ExtensionContext) {
       we.replace(preflightResult.editor.document.uri, new vscode.Range(selection.start, selection.end), decryptedText);
     }
     else {
-      let vaultId: string;
-      await selectVaultId().then((val) => {vaultId = val;})
-      if (vaultId === null) {
-        // Palette command canceled
-        return
-      }
+      let vaultId = await selectVaultId();
+      if (vaultId === null) return  // Palette command canceled
       // encrypt
       let encryptedText = encryptString(selectedText, preflightResult.takeKeyFromAnsibleConfig, preflightResult.vaultKeyPath, preflightResult.config, vaultId)
       we.replace(preflightResult.editor.document.uri, new vscode.Range(selection.start, selection.end), encryptedText);
@@ -172,7 +164,6 @@ let checkIfStringIsEncrypted = (str: string) => {
 }
 
 let selectVaultId = async () => {
-  let vaultId: string;
   let config = vscode.workspace.getConfiguration('ansibleVault');
   let labelList = config.vaultIds.map(function(e: any){return e.label});
   if (labelList.length == 0) {
@@ -180,9 +171,7 @@ let selectVaultId = async () => {
     return undefined
   }
   labelList.unshift("default");
-  await vscode.window.showQuickPick(labelList).then((val) => {
-    vaultId = val;
-  })
+  let vaultId = await vscode.window.showQuickPick(labelList);
   return vaultId;
 }
 
