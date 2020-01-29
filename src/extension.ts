@@ -175,7 +175,7 @@ let selectVaultId = async () => {
   return vaultId;
 }
 
-let argumentsVaultIds = (keyInCfg, pass, vaultId: string = "") => {
+let argumentsVaultIds = (keyInCfg: boolean, pass: string, vaultId: string = null) => {
   let args = ""
   let config = vscode.workspace.getConfiguration('ansibleVault');
   // Specify vault-password-file when vault_password_file not in ansible.cfg
@@ -191,7 +191,7 @@ let argumentsVaultIds = (keyInCfg, pass, vaultId: string = "") => {
   return args;
 }
 
-let encryptFile = (f, rootPath, keyInCfg, pass, config, vaultId: string = "default") => {
+let encryptFile = (f, rootPath, keyInCfg, pass, config, vaultId) => {
   console.log("Encrypt: " + f);
 
   let cmd = `${config.executable} encrypt "${f}"`;
@@ -206,7 +206,7 @@ let encryptFile = (f, rootPath, keyInCfg, pass, config, vaultId: string = "defau
   vscode.window.showInformationMessage(`${f} encrypted`);
 }
 
-let encryptString = (str: string, keyInCfg: boolean, pass: string, config: any, vaultId: string = "default") => {
+let encryptString = (str: string, keyInCfg: boolean, pass: string, config: any, vaultId: string) => {
   // use printf instead of echo because echo is not consistent across platforms when it comes to
   // avoiding trailing empty line
   let cmd = `printf "%s" '${str}' | ${config.executable} - encrypt_string`;
