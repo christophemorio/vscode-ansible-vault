@@ -209,7 +209,7 @@ let encryptFile = (f, rootPath, keyInCfg, pass, config, vaultId) => {
 let encryptString = (str: string, keyInCfg: boolean, pass: string, config: any, vaultId: string) => {
   // use printf instead of echo because echo is not consistent across platforms when it comes to
   // avoiding trailing empty line
-  let cmd = `printf "%s" '${str}' | ${config.executable} - encrypt_string`;
+  let cmd = `printf "%s" '${str}' | ${config.executable} encrypt_string -`;
   cmd += argumentsVaultIds(keyInCfg, pass, vaultId);
 
   let env = config.vaultIdMatch ? {"ANSIBLE_VAULT_ID_MATCH": "1"} : {};
