@@ -180,7 +180,7 @@ let encryptFile = (f, rootPath, keyInCfg, pass, config) => {
 let encryptString = (str: string, keyInCfg: boolean, pass: string, config: any) => {
   // use printf instead of echo because echo is not consistent across platforms when it comes to
   // avoiding trailing empty line
-  let cmd = `printf "%s" '${str}' | ${config.executable} - encrypt_string`;
+  let cmd = `printf "%s" '${str}' | ${config.executable} encrypt_string -`;
   // Specify vault-password-file when vault_password_file not in ansible.cfg
   if (!keyInCfg) {
     cmd += ` --vault-password-file="${pass}"`;
